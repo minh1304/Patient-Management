@@ -6,7 +6,6 @@
         public string LastName { get; set; }
         public string Gender { get; set; }
         public DateTime DateOfBirth { get; set; }
-        public bool IsActive { get; set; }
         public List<ContactInfoDto> ContactInfos { get; set; }
         public List<AddressDto> Addresses { get; set; }
     }
@@ -35,7 +34,11 @@
         public int PageIndex { get; set; } = 1;
         public int PageSize { get; set; } = 10;
     }
-
+    public class ListPatientsDto
+    {
+        public int TotalRecords { get; set; }
+        public List<GetPatientDto> Patients { get; set; }
+    }
     public class GetPatientDto
     {
         public int PatientId { get; set; }
@@ -46,7 +49,6 @@
         public bool IsActive { get; set; }
         public List<GetContactInfoDto> ContactInfos { get; set; }
         public List<GetAddressDto> Addresses { get; set; }
-        public int TotalRecords { get; set; }
     }
     public class GetContactInfoDto
     {

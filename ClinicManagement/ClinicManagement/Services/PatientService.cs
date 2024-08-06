@@ -30,7 +30,6 @@ namespace ClinicManagement.Services
                     command.Parameters.AddWithValue("@LastName", patientDto.LastName);
                     command.Parameters.AddWithValue("@Gender", patientDto.Gender);
                     command.Parameters.AddWithValue("@DateOfBirth", patientDto.DateOfBirth);
-                    command.Parameters.AddWithValue("@IsActive", patientDto.IsActive);
 
                     var result = await command.ExecuteScalarAsync();
                     patientId = Convert.ToInt32(result);
@@ -70,21 +69,16 @@ namespace ClinicManagement.Services
             }
         }
 
-        public async Task<IEnumerable<GetPatientDto>> GetPatientsAsync(string searchTerm, int pageIndex, int pageSize)
+        public async Task<ListPatientsDto> GetPatientsAsync(string searchTerm, int pageIndex, int pageSize)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
-                var parameters = new
-                {
-                    SearchTerm = searchTerm,
-                    PageIndex = pageIndex,
-                    PageSize = pageSize
-                };
+                var parameters = new { SearchTerm = searchTerm };
 
                 await connection.OpenAsync();
 
                 var result = await connection.QueryAsync(
-                    "EXEC sp_GetPatients @SearchTerm, @PageIndex, @PageSize",
+                    "EXEC sp_GetPatients @SearchTerm",
                     parameters,
                     commandType: CommandType.Text
                 );
@@ -106,10 +100,10 @@ namespace ClinicManagement.Services
                     City = (string)row.City,
                     State = (string)row.State,
                     ZipCode = (string)row.ZipCode,
-                    Country = (string)row.Country,
-                    TotalRecords = (int)row.TotalRecords
+                    Country = (string)row.Country
                 }).ToList();
 
+                // Grouping the results
                 var patientDictionary = patientResults
                     .GroupBy(p => new
                     {
@@ -118,8 +112,7 @@ namespace ClinicManagement.Services
                         p.LastName,
                         p.Gender,
                         p.DateOfBirth,
-                        p.IsActive,
-                        p.TotalRecords
+                        p.IsActive
                     })
                     .Select(g => new GetPatientDto
                     {
@@ -129,7 +122,6 @@ namespace ClinicManagement.Services
                         Gender = g.Key.Gender,
                         DateOfBirth = g.Key.DateOfBirth,
                         IsActive = g.Key.IsActive,
-                        TotalRecords = g.Key.TotalRecords,
                         ContactInfos = g
                             .Where(p => p.ContactId.HasValue)
                             .GroupBy(p => new { p.ContactId, p.ContactType, p.ContactDetail })
@@ -154,9 +146,21 @@ namespace ClinicManagement.Services
                             }).ToList()
                     }).ToList();
 
-                return patientDictionary;
+                var totalRecords = patientDictionary.Count;
+                var paginatedResults = patientDictionary
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                return new ListPatientsDto
+                {
+                    TotalRecords = totalRecords,
+                    Patients = paginatedResults
+                };
             }
         }
+
+
         public async Task<GetPatientDto> GetPatientByIdAsync(int patientId)
         {
             using (var connection = new SqlConnection(_connectionString))

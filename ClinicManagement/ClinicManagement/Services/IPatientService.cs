@@ -9,7 +9,7 @@ namespace ClinicManagement.Services
     public interface IPatientService
     {
         Task<int> CreatePatientAsync(PatientCreationDto patientDto);
-        Task<IEnumerable<GetPatientDto>> GetPatientsAsync(string searchTerm, int pageIndex, int pageSize);
+        Task<ListPatientsDto> GetPatientsAsync(string searchTerm, int pageIndex, int pageSize);
         Task<GetPatientDto> GetPatientByIdAsync(int patientId);
         Task UpdatePatientAsync(UpdatePatientDto patientDto);
         Task DeactivatePatientAsync(DeactivatePatientDto deactivatePatientDto);
